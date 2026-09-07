@@ -1,0 +1,283 @@
+/* ============================================================
+ * boards.css —— Memory（mb-*）与 Todo（tb-*）两整页板块的共享样式层。
+ * 两板同属「列表 + 顶部工具行」形态，input/button/iconbtn/listhead/row/flash/empty
+ * 等原在两份 scoped CSS 里各写一份且数值漂移（8px vs 9px 内距之类），收敛到这里用
+ * 分组选择器单一来源；颜色一律走 --do-* 令牌。两板各自的布局差异（Memory 的 profile/
+ * facets/related、Todo 的 checkbox/disclose）留在各自 scoped。
+ * 拼接顺序：theme.css 之后（main.ts 导入），无需 !important。
+ * ============================================================ */
+
+/* ---------- 板块根：整页自滚、居中内容轨。几何完全复刻聊天内容列 .ds-inner：
+   - 同款 clamp 侧距 20→96px、内容上限 1760px（.ds-inner 是 content-box，外框会再加
+     两侧 padding；这里 border-box，max-width 需把两侧 padding 算回去，最终外框/内容
+     宽与 .ds-inner 逐档一致——全屏时不再比聊天列窄出一截、留大片两侧死区） ---------- */
+.mb-root,
+.tb-root {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  box-sizing: border-box;
+  overflow-y: auto;
+  width: 100%;
+  max-width: calc(1760px + clamp(20px, 3vw, 96px) * 2);
+  margin-inline: auto;
+  padding: 22px clamp(20px, 3vw, 96px) 64px;
+}
+
+/* ---------- 输入框（搜索 / 新增 / 行内编辑共用） ---------- */
+.mb-input,
+.tb-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 12px;
+  border: 1px solid var(--do-divider);
+  border-radius: 2px; /* Hermes 近直角：文本框与行/复选框同尺，原 5px（--do-radius-md）显圆 */
+  background: var(--do-bg-elv);
+  color: var(--do-text-1);
+  font: inherit;
+  font-size: 13px;
+  outline: none;
+  transition: border-color var(--do-dur-fast), box-shadow var(--do-dur-fast),
+    background var(--do-dur-fast);
+}
+.mb-input:focus,
+.tb-input:focus {
+  border-color: var(--do-border-strong);
+  box-shadow: 0 0 0 3px var(--do-brand-soft);
+}
+.mb-input::placeholder,
+.tb-input::placeholder {
+  color: var(--do-text-placeholder);
+}
+.mb-input:disabled,
+.tb-input:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* ---------- 带框新增单元：输入框 + 沉在框内右端的圆形加号钮（Memory 手动新增与 Todo
+   新增同一种控件；框角 2px 与行同尺，加号是两板唯一保留的圆 = 发送钮语法的墨钮） ---------- */
+.mb-add,
+.tb-add {
+  position: relative;
+}
+.mb-add .mb-input,
+.tb-add .tb-input {
+  width: 100%;
+  padding-right: 44px; /* 右端让位给沉框加号，文字不压到钮底下 */
+}
+.mb-addbtn,
+.tb-addbtn {
+  position: absolute;
+  top: 50%;
+  right: 5px;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--do-text-0); /* 纸底纯白，正文灰阶不动它 */
+  color: var(--do-bg);
+  cursor: pointer;
+  transition: background var(--do-dur-fast), opacity 0.15s;
+}
+.mb-addbtn:hover:not(:disabled),
+.tb-addbtn:hover:not(:disabled) {
+  background: var(--do-brand-3);
+}
+.mb-addbtn:disabled,
+.tb-addbtn:disabled {
+  background: rgba(255, 255, 255, 0.26);
+  color: rgba(0, 0, 0, 0.55);
+  cursor: default;
+}
+
+/* ---------- 按钮：ghost 无盒文字钮 / xs 小号（primary 墨底大钮已随新增行改沉框加号撤除） ---------- */
+.mb-btn,
+.tb-btn {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border: 1px solid transparent;
+  border-radius: 2px; /* Hermes 近直角：控件钮与行同尺（原 4px） */
+  font: inherit;
+  font-size: 12px; /* Hermes 控件刻度（Button text-xs 12px） */
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background var(--do-dur-fast), color var(--do-dur-fast),
+    border-color var(--do-dur-fast), opacity 0.15s;
+}
+.mb-btn:disabled,
+.tb-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+/* ghost = Hermes 的「无盒文字钮」语法（text / textStrong，settings 里的 Cancel/Clear/
+   Change 同款）：无描边、hover 才垫底色；重强调用 .--strong 提字重。
+   （primary 墨底大钮已撤：两板新增一律走沉框圆形加号，见输入区「带框新增单元」。） */
+.mb-btn--ghost,
+.tb-btn--ghost {
+  color: var(--do-text-3);
+  border-color: transparent;
+  background: transparent;
+  padding: 5px 9px;
+  font-size: 12px;
+}
+.mb-btn--ghost:hover:not(:disabled),
+.tb-btn--ghost:hover:not(:disabled) {
+  color: var(--do-text-1);
+  background: var(--do-bg-hover);
+}
+.mb-btn--strong,
+.tb-btn--strong {
+  color: var(--do-text-2);
+  font-weight: 600;
+}
+.mb-btn--strong:hover:not(:disabled),
+.tb-btn--strong:hover:not(:disabled) {
+  color: var(--do-text-1);
+}
+.mb-btn--xs,
+.tb-btn--xs {
+  padding: 3px 8px;
+  font-size: 11px;
+}
+
+/* ---------- 方形图标钮（行内动作；hover 显隐逻辑在各板 scoped） ---------- */
+.mb-iconbtn,
+.tb-iconbtn {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: none;
+  border-radius: 2px; /* 近直角：方形图标钮与行同尺 */
+  background: transparent;
+  color: var(--do-text-3);
+  cursor: pointer;
+  transition: color var(--do-dur-fast), background var(--do-dur-fast), opacity 0.15s;
+}
+.mb-iconbtn:hover:not(:disabled),
+.tb-iconbtn:hover:not(:disabled) {
+  color: var(--do-text-1);
+  background: var(--do-bg-hover);
+}
+.mb-iconbtn.is-on,
+.tb-iconbtn.is-on {
+  color: var(--do-text-1);
+  background: var(--do-bg-active);
+}
+.mb-iconbtn.is-danger:hover:not(:disabled),
+.tb-iconbtn.is-danger:hover:not(:disabled) {
+  color: var(--do-danger-1);
+  background: var(--do-danger-soft);
+}
+.mb-iconbtn:disabled,
+.tb-iconbtn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+/* ---------- 分组标签行（小写分节标题 + 可选右端说明/操作） ---------- */
+.mb-listhead,
+.tb-listhead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 2px 4px;
+}
+.mb-listhead__label,
+.tb-listhead__label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--do-text-3);
+}
+.mb-listhead__n,
+.tb-listhead__n {
+  margin-left: 5px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--do-text-3);
+}
+
+/* ---------- 列表行：去盒化（无边框无底卡），hover 出 bg-hover ---------- */
+.mb-list,
+.tb-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.mb-it,
+.tb-it {
+  position: relative;
+  box-sizing: border-box;
+  border-radius: 2px; /* Hermes 列表行尺（同侧栏会话行）：近直角，不再有胶囊感 */
+  padding: 8px 10px;
+  transition: background var(--do-dur-fast);
+}
+.mb-it:hover,
+.tb-it:hover {
+  background: var(--do-bg-hover);
+}
+.mb-it__text,
+.tb-it__text {
+  margin: 0;
+  font-size: 13px; /* Hermes 正文刻度，行高给中文留呼吸 */
+  line-height: 1.6;
+  color: var(--do-text-1);
+  overflow-wrap: break-word;
+}
+
+/* ---------- 底部提示条 ---------- */
+.mb-flash,
+.tb-flash {
+  margin: 14px 2px 0;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.mb-flash.is-ok,
+.tb-flash.is-ok {
+  color: var(--do-text-2);
+}
+.mb-flash.is-warn,
+.tb-flash.is-warn {
+  color: var(--do-warn-1);
+}
+.mb-flash.is-err,
+.tb-flash.is-err {
+  color: var(--do-danger-1);
+}
+
+/* ---------- 空态：纯文字居中（无虚线框） ---------- */
+.mb-empty,
+.tb-empty {
+  margin: 0;
+  padding: 36px 12px 44px;
+  text-align: center;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--do-text-3);
+}
+.mb-empty__main,
+.tb-empty__main {
+  margin: 0;
+  font-size: 13px;
+  color: var(--do-text-2);
+}

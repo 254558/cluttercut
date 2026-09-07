@@ -1,0 +1,1488 @@
+/* ============================================================
+ * theme.css —— 级联主题（按序拼接，勿打乱）：
+ *   1) lucide-icons 图标
+ *   2) vercel       深色 Vercel 底 + Geist 字体（@font-face 相对 fonts/）
+ *   3) hermes-theme 主主题覆盖 + .ds-* 组件样式
+ *   4) bare-shell   裸壳 html/body 基线
+ * 上游基础层见 tui-base.css（vendored，须在其后加载）。
+ * ============================================================ */
+
+/* ============================================================
+   ClutterCut 令牌层（深色 Hermes）—— Memory/Todo 板与组件 scoped CSS 的
+   唯一读写源头；本文件其余部分沿用历史 .ds-* / --vp-c-* 直写值（深色基准），
+   不在此层之外另造颜色。命名沿用 --do-* 前缀，勿改前缀、勿在组件里直读 --vp-c-*。
+   ============================================================ */
+:root,
+html.dark,
+html.dark.tui-theme-default {
+  color-scheme: dark;
+  /* --- 背景分层：主区 #1d1f22 底（整站主背景）= Hermes 石墨画布（用户指定真底值；
+     早期误以为真底更暗才取 #0d1117，现纠正）。次级表面逐级提亮并保持原亮差：
+     soft = #26292d（表单/弹层底），elv = #2a2c2f（最亮的板卡/浮层）。
+     发送框 = 沉槽暗井 #101114（比画布暗一档，用户指定），见 .ds-bar --- */
+  --do-bg: #1d1f22;
+  --do-bg-soft: #26292d;
+  --do-bg-elv: #2a2c2f;
+  --do-bg-hover: rgba(255, 255, 255, 0.06);
+  --do-bg-active: rgba(255, 255, 255, 0.12);
+  /* --- 用户消息卡（Hermes composer-human-message）：独占一行的近黑微蓝卡。
+     直接落地 Hermes 深色 nous 的混算结果：userBubble #07162c ×46% 混 neutral-card
+     #161618 → #0f1621；描边用 userBubbleBorder #30363d --- */
+  --do-user-bg: #0f1621;
+  --do-user-border: #30363d;
+  /* --- 文字灰阶（Hermes：看着是白、实为灰；纯白 --do-text-0 只留给标题/真强调，
+     1 = 正文阅读字 → 3 = meta 级，占位符最浅） --- */
+  --do-text-0: #ffffff;
+  --do-text-1: #dcdfe6;
+  --do-text-2: #a9afbb;
+  --do-text-3: #7f8694;
+  --do-text-placeholder: #6b7280;
+  /* --- hairline 边框 / 分隔（细分隔用 divider） --- */
+  --do-border: rgba(255, 255, 255, 0.1);
+  --do-divider: rgba(255, 255, 255, 0.08);
+  --do-border-strong: rgba(255, 255, 255, 0.2);
+  /* --- 品牌 / 强调 = 近白墨阶（唯一彩色 = 下方 --do-accent，勿再引其它色） --- */
+  --do-brand-1: #e8e8ec;
+  --do-brand-2: #f4f4f6;
+  --do-brand-3: #ffffff;
+  --do-brand-soft: rgba(255, 255, 255, 0.08);
+  /* --- 唯一蓝 accent（Hermes 主键 #5b9bff）：模块 tab 下划线 / Memory 筛选高亮
+     / Sessions 分组标题与方形矩 专用 --- */
+  --do-accent: #5b9bff;
+  --do-accent-strong: #7fb0ff;
+  --do-accent-soft: rgba(91, 155, 255, 0.16);
+  /* --- 危险 / 警示：深底可读的亮一档 --- */
+  --do-danger-1: #e75e78;
+  --do-danger-2: #ff7d98;
+  --do-danger-3: #b23a52;
+  --do-danger-soft: rgba(231, 94, 120, 0.16);
+  --do-warn-1: #e7b75e;
+  --do-warn-soft: rgba(231, 183, 94, 0.16);
+  /* --- 尺寸 / 圆角 / 阴影 / 动效（Hermes 小圆角、克制阴影、快过渡） ---
+     圆角尺收口 Hermes：控件/图标钮 4px（rounded 4px 同款）→ 输入框 5px → 主按钮 6px。
+     sm/md/lg 仅被 Memory/Todo 两板引用（boards.css + 两组件 scoped）；行/列表 2px、
+     弹层 8px 等不走这组令牌，已在各自规则内按 Hermes 值硬编码。 */
+  --do-radius-sm: 4px;
+  --do-radius-md: 5px;
+  --do-radius-lg: 6px;
+  --do-radius-pill: 999px;
+  --do-shadow-pop:
+    0 1px 2px rgba(0, 0, 0, 0.6),
+    0 8px 24px -8px rgba(0, 0, 0, 0.85),
+    0 20px 48px -16px rgba(0, 0, 0, 0.95);
+  --do-dur-fast: 0.1s;
+  --do-dur-base: 0.15s;
+}
+
+
+/* ---------------- lucide-icons.css ---------------- */
+/*
+ * lucide 图标（替代 emoji）
+ * - .lucide-inline：正文/标题里内联的 lucide svg
+ * - .custom-block.* 提示框标题：按类型注入 lucide 图标（不再依赖任何 emoji / emoji 短代码）
+ */
+
+.lucide-inline {
+  display: inline-block;
+  vertical-align: -0.18em;
+}
+
+.custom-block-title {
+  display: flex;
+  align-items: center;
+}
+
+.custom-block-title::before {
+  content: "";
+  display: inline-block;
+  flex: none;
+  width: 1em;
+  height: 1em;
+  margin-right: 0.45em;
+  background-color: currentColor;
+  -webkit-mask: var(--cb-icon) no-repeat center / contain;
+  mask: var(--cb-icon) no-repeat center / contain;
+}
+
+/*
+ * vitepress-theme-tui 在 @layer components 里用 !important 把提示框标题前的
+ * 图标压成 8px。放进同一层、加载顺序在后，才能覆盖它：抬回 18px。
+ * 只作用于真正带 lucide 图标的四种容器，其它类型保持主题原样。
+ */
+@layer components {
+  .custom-block.tip .custom-block-title::before,
+  .custom-block.info .custom-block-title::before,
+  .custom-block.warning .custom-block-title::before,
+  .custom-block.danger .custom-block-title::before {
+    width: 18px !important;
+    height: 18px !important;
+  }
+}
+
+.custom-block.tip .custom-block-title {
+  --cb-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5'/%3E%3Cpath d='M9 18h6'/%3E%3Cpath d='M10 22h4'/%3E%3C/svg%3E");
+}
+
+.custom-block.info .custom-block-title {
+  --cb-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='M12 16v-4'/%3E%3Cpath d='M12 8h.01'/%3E%3C/svg%3E");
+}
+
+.custom-block.warning .custom-block-title {
+  --cb-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z'/%3E%3Cpath d='M12 9v4'/%3E%3Cpath d='M12 17h.01'/%3E%3C/svg%3E");
+}
+
+.custom-block.danger .custom-block-title {
+  --cb-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7.86 2h8.28L22 7.86v8.28L16.14 22H7.86L2 16.14V7.86L7.86 2z'/%3E%3Cpath d='M12 8v4'/%3E%3Cpath d='M12 16h.01'/%3E%3C/svg%3E");
+}
+
+
+/* ---------------- vercel.css ---------------- */
+/* Vercel 黑白主题（固定暗色）
+   - 纯黑背景 #000 + 近白文字，界面外壳（导航/侧栏/按钮/聊天面板）无强调色
+   - 文档正文（.vp-doc）内的内容元素恢复彩色：链接浅紫、8 类提示框彩色
+     （代码语法高亮本来就是彩色，保持不变）
+   - 分隔线全部用白色半透明 hairline；控件微圆角 6px、1px 描边
+   - 字体：正文 Geist Sans、代码/等宽 Geist Mono（本地自托管 woff2）
+   - TUI 主题把整站字体与圆角走 --vp-tui-* 变量（!important），改变量本身即可全站生效
+   拼接顺序先于 hermes-theme 层（其同名规则后写者赢）。 */
+
+@font-face {
+  font-family: "Geist";
+  src: url("./fonts/geist-sans.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Geist Mono";
+  src: url("./fonts/geist-mono.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+/* 覆盖需在 html 上有 .dark（VitePress）与 .tui-theme-default（TUI）时都生效 */
+html.dark,
+html.dark.tui-theme-default {
+  /* --- 字体 --- */
+  --vp-font-family-base: "Geist", "Inter", ui-sans-serif, system-ui, "PingFang SC",
+    "Noto Sans CJK SC", "Noto Sans SC", "Heiti SC", "Microsoft YaHei", "DengXian",
+    sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --vp-font-family-mono: "Geist Mono", ui-monospace, "SF Mono", "Menlo", "Monaco",
+    "Consolas", "Liberation Mono", "Courier New", monospace;
+  --vp-tui-font-family: var(--vp-font-family-base);
+
+  /* --- Vercel 纯黑底色 --- */
+  --vp-c-bg: #000000;
+  --vp-c-bg-alt: #000000;
+  --vp-c-bg-elv: #101010;
+  --vp-c-bg-soft: #0d0d0d;
+  /* 文档侧栏背景与主页聊天侧栏（.ds-side，同样取 bg-soft）保持一致 */
+  --vp-sidebar-bg-color: var(--vp-c-bg-soft);
+  --vp-c-gutter: #000000;
+
+  /* --- 文字灰阶 --- */
+  --vp-c-text-1: #fafafa;
+  --vp-c-text-2: #a3a3a3;
+  --vp-c-text-3: #737373;
+
+  /* --- hairline 分隔/描边 --- */
+  --vp-c-border: rgba(255, 255, 255, 0.16);
+  --vp-c-divider: rgba(255, 255, 255, 0.16);
+  --vp-c-divider-light: rgba(255, 255, 255, 0.08);
+  --vp-c-divider-dark: rgba(255, 255, 255, 0.2);
+
+  /* --- 品牌与全套功能色统一灰阶（-1 亮 → -3 暗） --- */
+  --vp-c-brand-1: #fafafa;
+  --vp-c-brand-2: #d4d4d4;
+  --vp-c-brand-3: #6f6f6f;
+  --vp-c-brand-soft: rgba(250, 250, 250, 0.06);
+  --vp-c-default-1: #e4e4e4;
+  --vp-c-default-2: #b4b4b4;
+  --vp-c-default-3: #6f6f6f;
+  --vp-c-default-soft: rgba(255, 255, 255, 0.06);
+  --vp-c-gray-1: #e4e4e4;
+  --vp-c-gray-2: #b4b4b4;
+  --vp-c-gray-3: #6f6f6f;
+  --vp-c-gray-soft: rgba(255, 255, 255, 0.06);
+  --vp-c-neutral: #fafafa;
+  --vp-c-neutral-inverse: #000000;
+
+  /* --- Doc_Copilot 彩色点缀：外壳保持黑白灰，这些只给重点内容/反馈上色 --- */
+  --dc-cyan: #7dd3fc;
+  --dc-sky: #38bdf8;
+  --dc-teal: #5eead4;
+  --dc-green: #86efac;
+  --dc-lime: #bef264;
+  --dc-amber: #fcd34d;
+  --dc-pink: #f9a8d4;
+
+  /* 色相原色同样压灰（badge、自定义容器、组件 fallback 引用的地方） */
+  --vp-c-indigo-1: #e4e4e4;
+  --vp-c-indigo-2: #b4b4b4;
+  --vp-c-indigo-3: #6f6f6f;
+  --vp-c-indigo-soft: rgba(255, 255, 255, 0.06);
+  --vp-c-purple-1: #e4e4e4;
+  --vp-c-purple-2: #b4b4b4;
+  --vp-c-purple-3: #6f6f6f;
+  --vp-c-purple-soft: rgba(255, 255, 255, 0.06);
+  --vp-c-green-1: #e4e4e4;
+  --vp-c-green-2: #b4b4b4;
+  --vp-c-green-3: #6f6f6f;
+  --vp-c-green-soft: rgba(255, 255, 255, 0.06);
+  --vp-c-yellow-1: #e4e4e4;
+  --vp-c-yellow-2: #b4b4b4;
+  --vp-c-yellow-3: #6f6f6f;
+  --vp-c-yellow-soft: rgba(255, 255, 255, 0.06);
+  --vp-c-red-1: #e4e4e4;
+  --vp-c-red-2: #b4b4b4;
+  --vp-c-red-3: #6f6f6f;
+  --vp-c-red-soft: rgba(255, 255, 255, 0.06);
+
+  /* 默认主题自定义容器（::: tip / info / ... 若不经 TUI 渲染也保持黑白） */
+  --vp-c-tip-1: #e4e4e4;
+  --vp-c-tip-2: #b4b4b4;
+  --vp-c-tip-3: #6f6f6f;
+  --vp-c-tip-soft: rgba(255, 255, 255, 0.06);
+  --vp-c-note-1: #e4e4e4;
+  --vp-c-note-2: #b4b4b4;
+  --vp-c-note-3: #6f6f6f;
+  --vp-c-note-soft: rgba(255, 255, 255, 0.06);
+  --vp-c-important-1: #e4e4e4;
+  --vp-c-important-2: #b4b4b4;
+  --vp-c-important-3: #6f6f6f;
+  --vp-c-important-soft: rgba(255, 255, 255, 0.06);
+  --vp-c-warning-1: #e4e4e4;
+  --vp-c-warning-2: #b4b4b4;
+  --vp-c-warning-3: #6f6f6f;
+  --vp-c-warning-soft: rgba(255, 255, 255, 0.06);
+  --vp-c-danger-1: #e4e4e4;
+  --vp-c-danger-2: #b4b4b4;
+  --vp-c-danger-3: #6f6f6f;
+  --vp-c-danger-soft: rgba(255, 255, 255, 0.06);
+  --vp-c-caution-1: #e4e4e4;
+  --vp-c-caution-2: #b4b4b4;
+  --vp-c-caution-3: #6f6f6f;
+  --vp-c-caution-soft: rgba(255, 255, 255, 0.06);
+
+  /* --- 按钮：主按钮 = 白底黑字（Vercel primary），次按钮 = 透明描边 --- */
+  --vp-button-brand-bg: #fafafa;
+  --vp-button-brand-text: #000000;
+  --vp-button-brand-border: transparent;
+  --vp-button-brand-hover-bg: #e4e4e4;
+  --vp-button-brand-hover-text: #000000;
+  --vp-button-brand-hover-border: transparent;
+  --vp-button-brand-active-bg: #d4d4d4;
+  --vp-button-brand-active-text: #000000;
+  --vp-button-brand-active-border: transparent;
+  --vp-button-alt-bg: transparent;
+  --vp-button-alt-text: #fafafa;
+  --vp-button-alt-border: rgba(255, 255, 255, 0.24);
+  --vp-button-alt-hover-bg: rgba(255, 255, 255, 0.08);
+  --vp-button-alt-hover-text: #fafafa;
+  --vp-button-alt-hover-border: rgba(255, 255, 255, 0.3);
+  --vp-button-alt-active-bg: rgba(255, 255, 255, 0.12);
+  --vp-button-alt-active-text: #fafafa;
+  --vp-button-alt-active-border: rgba(255, 255, 255, 0.3);
+
+  /* --- 输入 --- */
+  --vp-input-bg-color: #0a0a0a;
+  --vp-input-border-color: rgba(255, 255, 255, 0.2);
+
+  /* --- 代码 --- */
+  --vp-code-block-bg: #0d0d0d;
+  --vp-code-bg: rgba(255, 255, 255, 0.07);
+  --vp-code-color: #ededed;
+
+  /* TUI 代码块/代码组同样由 @layer !important 规则引用 --vp-tui-code-* 变量 */
+  --vp-tui-code-group-bg: #0d0d0d;
+  --vp-tui-code-group-border-color: rgba(255, 255, 255, 0.14);
+  --vp-tui-code-group-border-style: solid;
+  --vp-tui-code-group-border-width: 1px;
+  --vp-tui-code-group-border-radius: 6px;
+  --vp-tui-code-group-standalone-border-radius: 6px;
+  --vp-tui-code-group-tabs-bg: #111111;
+  --vp-tui-code-group-tabs-border-color: rgba(255, 255, 255, 0.14);
+  --vp-tui-code-group-tabs-border-style: solid;
+  --vp-tui-code-group-tabs-border-width: 1px;
+  --vp-tui-code-group-tabs-border-radius: 6px;
+  --vp-tui-code-group-tabs-label-active-bg: #fafafa;
+  --vp-tui-code-group-tabs-label-active-fg: #000000;
+  --vp-tui-code-group-tabs-label-active-border-radius: 4px;
+  --vp-tui-code-copy-bg: rgba(255, 255, 255, 0.06);
+  --vp-tui-code-copy-bg-hover: rgba(255, 255, 255, 0.12);
+  --vp-tui-code-copy-border-color: rgba(255, 255, 255, 0.16);
+  --vp-tui-code-copy-border-color-hover: rgba(255, 255, 255, 0.24);
+  --vp-tui-code-copy-border-width: 1px;
+  --vp-tui-code-copy-border-radius: 6px;
+
+  /* --- TUI 排版质感：1px hairline 边框 + 6px 圆角 + 深色面板 --- */
+  --vp-tui-border-width: 1px;
+  --vp-tui-border-radius: 6px;
+  --vp-tui-border-color: rgba(255, 255, 255, 0.16);
+  --vp-tui-c-bg: var(--vp-c-bg);
+  --vp-tui-table-bg: #000000;
+  --vp-tui-table-row-alt-bg: #0d0d0d;
+  --vp-tui-table-header-bg: rgba(255, 255, 255, 0.05);
+  --vp-tui-table-header-fg: #fafafa;
+  --vp-tui-table-border-color: rgba(255, 255, 255, 0.12);
+  --vp-tui-table-header-border-color: rgba(255, 255, 255, 0.12);
+  --vp-tui-table-border-radius: 6px;
+
+  /* --- TUI 彩色 custom-block（::: tip / info / ... 共 8 种）由 @layer 里
+       !important 规则引用 --vp-tui-custom-block-* 变量驱动，改变量本身压灰：
+       容器深底 + hairline 描边，标题条深灰底、白字（克制不抢戏） --- */
+  --vp-tui-custom-block-tip-accent: var(--vp-c-divider);
+  --vp-tui-custom-block-tip-accent-fg: var(--vp-c-text-2);
+  --vp-tui-custom-block-tip-border: var(--vp-c-divider);
+  --vp-tui-custom-block-tip-bg: var(--vp-c-bg-soft);
+  --vp-tui-custom-block-tip-fg: var(--vp-c-text-2);
+  --vp-tui-custom-block-tip-title-bg: #1c1c1c;
+  --vp-tui-custom-block-tip-title-fg: #fafafa;
+  --vp-tui-custom-block-info-accent: var(--vp-c-divider);
+  --vp-tui-custom-block-info-accent-fg: var(--vp-c-text-2);
+  --vp-tui-custom-block-info-border: var(--vp-c-divider);
+  --vp-tui-custom-block-info-bg: var(--vp-c-bg-soft);
+  --vp-tui-custom-block-info-fg: var(--vp-c-text-2);
+  --vp-tui-custom-block-info-title-bg: #1c1c1c;
+  --vp-tui-custom-block-info-title-fg: #fafafa;
+  --vp-tui-custom-block-note-accent: var(--vp-c-divider);
+  --vp-tui-custom-block-note-accent-fg: var(--vp-c-text-2);
+  --vp-tui-custom-block-note-border: var(--vp-c-divider);
+  --vp-tui-custom-block-note-bg: var(--vp-c-bg-soft);
+  --vp-tui-custom-block-note-fg: var(--vp-c-text-2);
+  --vp-tui-custom-block-note-title-bg: #1c1c1c;
+  --vp-tui-custom-block-note-title-fg: #fafafa;
+  --vp-tui-custom-block-important-accent: var(--vp-c-divider);
+  --vp-tui-custom-block-important-accent-fg: var(--vp-c-text-2);
+  --vp-tui-custom-block-important-border: var(--vp-c-divider);
+  --vp-tui-custom-block-important-bg: var(--vp-c-bg-soft);
+  --vp-tui-custom-block-important-fg: var(--vp-c-text-2);
+  --vp-tui-custom-block-important-title-bg: #1c1c1c;
+  --vp-tui-custom-block-important-title-fg: #fafafa;
+  --vp-tui-custom-block-warning-accent: var(--vp-c-divider);
+  --vp-tui-custom-block-warning-accent-fg: var(--vp-c-text-2);
+  --vp-tui-custom-block-warning-border: var(--vp-c-divider);
+  --vp-tui-custom-block-warning-bg: var(--vp-c-bg-soft);
+  --vp-tui-custom-block-warning-fg: var(--vp-c-text-2);
+  --vp-tui-custom-block-warning-title-bg: #1c1c1c;
+  --vp-tui-custom-block-warning-title-fg: #fafafa;
+  --vp-tui-custom-block-danger-accent: var(--vp-c-divider);
+  --vp-tui-custom-block-danger-accent-fg: var(--vp-c-text-2);
+  --vp-tui-custom-block-danger-border: var(--vp-c-divider);
+  --vp-tui-custom-block-danger-bg: var(--vp-c-bg-soft);
+  --vp-tui-custom-block-danger-fg: var(--vp-c-text-2);
+  --vp-tui-custom-block-danger-title-bg: #1c1c1c;
+  --vp-tui-custom-block-danger-title-fg: #fafafa;
+  --vp-tui-custom-block-caution-accent: var(--vp-c-divider);
+  --vp-tui-custom-block-caution-accent-fg: var(--vp-c-text-2);
+  --vp-tui-custom-block-caution-border: var(--vp-c-divider);
+  --vp-tui-custom-block-caution-bg: var(--vp-c-bg-soft);
+  --vp-tui-custom-block-caution-fg: var(--vp-c-text-2);
+  --vp-tui-custom-block-caution-title-bg: #1c1c1c;
+  --vp-tui-custom-block-caution-title-fg: #fafafa;
+  --vp-tui-custom-block-details-accent: var(--vp-c-divider);
+  --vp-tui-custom-block-details-accent-fg: var(--vp-c-text-2);
+  --vp-tui-custom-block-details-border: var(--vp-c-divider);
+  --vp-tui-custom-block-details-bg: var(--vp-c-bg-soft);
+  --vp-tui-custom-block-details-fg: var(--vp-c-text-2);
+  --vp-tui-custom-block-details-summary-bg: #1c1c1c;
+}
+
+/* --- 正文配色：黑白灰主调 + 彩色点缀（仅 .vp-doc 内容区） ---
+   上面把全局功能色压成了灰阶，界面外壳因此保持黑白；
+   这里只在文档内容根节点做小范围回色：
+   - 链接 → 低饱和绿 #98c379（--vp-tui-link-*），不花哨
+   - 品牌/强调 → 中性灰（避免粉/青乱入正文大面）
+   - ::: tip / info / note / important / warning / danger / caution / details
+     保留各自动词的小色块标题（值抄自 .dark.tui-theme-default 的 TUI 默认主题，
+     tip 由紫改 teal 拉开区分度）；表格/引用/分隔/行内代码等大面回灰见文件尾段 */
+.vp-doc {
+  --vp-c-brand-1: #eaeaee;
+  --vp-c-brand-2: #c8c8cf;
+  --vp-c-brand-3: #9d9da6;
+  --vp-c-brand-soft: rgba(255, 255, 255, 0.1);
+
+  /* 链接：TUI 用 --vp-tui-link-* 变量给 .vp-doc a 上色（layer !important 规则），
+     同样改变量即可：正文链接低调绿；hover 提亮、无底色、无下划线 */
+  --vp-tui-link-fg: #98c379;
+  --vp-tui-link-hover-fg: #b1d392;
+  --vp-tui-link-hover-bg: transparent;
+  --vp-tui-link-active-fg: #b1d392;
+  --vp-tui-link-visited-fg: #98c379;
+  --vp-tui-link-border-color: transparent;
+
+  --vp-tui-custom-block-info-accent: #60a5fa;
+  --vp-tui-custom-block-info-accent-fg: #1e3a8a;
+  --vp-tui-custom-block-info-border: var(--vp-tui-custom-block-info-accent);
+  --vp-tui-custom-block-info-bg: var(--vp-tui-c-bg);
+  --vp-tui-custom-block-info-fg: #dbeafe;
+  --vp-tui-custom-block-info-title-bg: var(--vp-tui-custom-block-info-accent);
+  --vp-tui-custom-block-info-title-fg: var(--vp-tui-custom-block-info-accent-fg);
+
+  --vp-tui-custom-block-note-accent: #38bdf8;
+  --vp-tui-custom-block-note-accent-fg: #0c4a6e;
+  --vp-tui-custom-block-note-border: var(--vp-tui-custom-block-note-accent);
+  --vp-tui-custom-block-note-bg: var(--vp-tui-c-bg);
+  --vp-tui-custom-block-note-fg: #e0f2fe;
+  --vp-tui-custom-block-note-title-bg: var(--vp-tui-custom-block-note-accent);
+  --vp-tui-custom-block-note-title-fg: var(--vp-tui-custom-block-note-accent-fg);
+
+  --vp-tui-custom-block-tip-accent: var(--dc-teal);
+  --vp-tui-custom-block-tip-accent-fg: #042f2e;
+  --vp-tui-custom-block-tip-border: var(--vp-tui-custom-block-tip-accent);
+  --vp-tui-custom-block-tip-bg: var(--vp-tui-c-bg);
+  --vp-tui-custom-block-tip-fg: #ccfbf1;
+  --vp-tui-custom-block-tip-title-bg: var(--vp-tui-custom-block-tip-accent);
+  --vp-tui-custom-block-tip-title-fg: var(--vp-tui-custom-block-tip-accent-fg);
+
+  --vp-tui-custom-block-important-accent: #a78bfa;
+  --vp-tui-custom-block-important-accent-fg: #4c1d95;
+  --vp-tui-custom-block-important-border: var(--vp-tui-custom-block-important-accent);
+  --vp-tui-custom-block-important-bg: var(--vp-tui-c-bg);
+  --vp-tui-custom-block-important-fg: #ede9fe;
+  --vp-tui-custom-block-important-title-bg: var(--vp-tui-custom-block-important-accent);
+  --vp-tui-custom-block-important-title-fg: var(--vp-tui-custom-block-important-accent-fg);
+
+  --vp-tui-custom-block-warning-accent: #fbbf24;
+  --vp-tui-custom-block-warning-accent-fg: #78350f;
+  --vp-tui-custom-block-warning-border: var(--vp-tui-custom-block-warning-accent);
+  --vp-tui-custom-block-warning-bg: var(--vp-tui-c-bg);
+  --vp-tui-custom-block-warning-fg: #fef3c7;
+  --vp-tui-custom-block-warning-title-bg: var(--vp-tui-custom-block-warning-accent);
+  --vp-tui-custom-block-warning-title-fg: var(--vp-tui-custom-block-warning-accent-fg);
+
+  --vp-tui-custom-block-danger-accent: #f87171;
+  --vp-tui-custom-block-danger-accent-fg: #7f1d1d;
+  --vp-tui-custom-block-danger-border: var(--vp-tui-custom-block-danger-accent);
+  --vp-tui-custom-block-danger-bg: var(--vp-tui-c-bg);
+  --vp-tui-custom-block-danger-fg: #fee2e2;
+  --vp-tui-custom-block-danger-title-bg: var(--vp-tui-custom-block-danger-accent);
+  --vp-tui-custom-block-danger-title-fg: var(--vp-tui-custom-block-danger-accent-fg);
+
+  --vp-tui-custom-block-caution-accent: #f472b6;
+  --vp-tui-custom-block-caution-accent-fg: #831843;
+  --vp-tui-custom-block-caution-border: var(--vp-tui-custom-block-caution-accent);
+  --vp-tui-custom-block-caution-bg: var(--vp-tui-c-bg);
+  --vp-tui-custom-block-caution-fg: #fce7f3;
+  --vp-tui-custom-block-caution-title-bg: var(--vp-tui-custom-block-caution-accent);
+  --vp-tui-custom-block-caution-title-fg: var(--vp-tui-custom-block-caution-accent-fg);
+
+  --vp-tui-custom-block-details-accent: #d4d4d8;
+  --vp-tui-custom-block-details-accent-fg: #18181b;
+  --vp-tui-custom-block-details-border: var(--vp-tui-custom-block-details-accent);
+  --vp-tui-custom-block-details-bg: var(--vp-tui-custom-block-details-accent-fg);
+  --vp-tui-custom-block-details-fg: #f4f4f5;
+  --vp-tui-custom-block-details-summary-bg: var(--vp-tui-custom-block-details-accent-fg);
+}
+
+/* TUI 的整站字体规则是 @layer overrides 里的 !important（会盖过普通规则）；
+   同样放进 overrides 层并抬高选择器，把代码/等宽元素拉回 Geist Mono */
+@layer overrides {
+  html.dark.tui-theme-default pre code,
+  html.dark.tui-theme-default code,
+  html.dark.tui-theme-default kbd,
+  html.dark.tui-theme-default samp {
+    font-family: var(--vp-font-family-mono) !important;
+  }
+}
+
+/* --- 质感细节 --- */
+
+/* 顶栏：半透明 + 毛玻璃，底部 1px hairline（Vercel 式悬浮导航） */
+.VPNavBar {
+  background-color: rgba(0, 0, 0, 0.72) !important;
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  backdrop-filter: blur(14px) saturate(140%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.VPNavScreen {
+  background-color: rgba(0, 0, 0, 0.92) !important;
+  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
+}
+/* 导航菜单项加粗（当前菜单只有「如何是好」一项）；默认主题是 500，这里抬高并压过它 */
+.VPNavBar .VPNavBarMenuLink {
+  font-weight: 700 !important;
+}
+
+/* 代码块黑底 + hairline 边框由上面 --vp-tui-code-* 变量接管 */
+
+::selection {
+  background-color: rgba(255, 255, 255, 0.22);
+}
+
+/* 聊天组件的实心控件：浅灰/白底时文字转黑，保证对比（Vercel primary 逻辑） */
+html.dark :is(.ds-send, .ds-mp-btn),
+html.dark.tui-theme-default :is(.ds-send, .ds-mp-btn) {
+  color: #000000;
+}
+/* 「压缩整理」为描边透明底按钮（非破坏性的维护操作）：dark 下保持白字，
+   不被上面 .ds-mp-btn 的实心黑字规则覆盖（透明底 + 黑字在黑面板上不可读） */
+html.dark :is(.ds-mp-btn--quiet),
+html.dark.tui-theme-default :is(.ds-mp-btn--quiet) {
+  color: #ffffff;
+}
+/* Key 弹窗「取消」同为描边透明底按钮：dark 下保持白字，不被上面 .ds-mp-btn 的
+   实心黑字规则覆盖（透明底 + 黑字在黑面板上不可读） */
+html.dark :is(.ds-k-cancel),
+html.dark.tui-theme-default :is(.ds-k-cancel) {
+  color: #ffffff;
+}
+
+/* --- 正文：黑白灰主调 + 少量点缀（仅 .vp-doc；外壳仍保持黑白） ---
+   标题/正文/引用/分隔线/表头/行内代码一律走灰阶，颜色只留小面积点缀：
+   链接一种低饱和绿 + ::: 提示框的小色块标题（见上面变量区），
+   不要下划线、不要大色块，观感收敛、与黑白外壳和谐。 */
+
+.vp-doc h1,
+.vp-doc h2,
+.vp-doc h3,
+.vp-doc h4 {
+  color: #f4f4f5; /* 标题：白字，靠字号/字重分层，不再单独染色 */
+}
+
+/* 下面这些元素仍被 TUI 主题 @layer !important 压住，普通规则盖不过；
+   照本文件前面字体改回 Geist Mono 的做法：同放进 overrides 层、
+   抬选择器、加 !important */
+@layer overrides {
+  /* 链接：无下划线、无底色；默认低饱和绿，hover 提亮一档，访问过不换色 */
+  html.dark.tui-theme-default .vp-doc a:not(.ml-link) {
+    color: #98c379 !important;
+    text-decoration: none !important;
+  }
+  html.dark.tui-theme-default .vp-doc a:not(.ml-link):visited {
+    color: #98c379 !important;
+  }
+  html.dark.tui-theme-default .vp-doc a:not(.ml-link):hover {
+    color: #b1d392 !important;
+    background-color: transparent !important;
+  }
+  /* 行内代码：低调灰底，不去抢正文 */
+  html.dark.tui-theme-default .vp-doc :not(pre) > code {
+    color: #eaeaee !important;
+    background-color: rgba(255, 255, 255, 0.08) !important;
+    border-radius: 3px;
+  }
+  /* 引用：细灰左边条，灰文字 */
+  html.dark.tui-theme-default .vp-doc blockquote {
+    border-left: 3px solid rgba(255, 255, 255, 0.16) !important;
+    color: #b8b8c0 !important;
+  }
+  /* 分割线：灰发丝线 */
+  html.dark.tui-theme-default .vp-doc hr {
+    border-top: 1px solid rgba(255, 255, 255, 0.12) !important;
+    background: transparent !important;
+  }
+  /* 表格头：灰底灰白字，方角（TUI 默认给表头格 6px 圆角，清零） */
+  html.dark.tui-theme-default .vp-doc th {
+    background-color: #26262b !important;
+    color: #e8e8ec !important;
+    border-radius: 0 !important;
+  }
+}
+
+
+/* ---------------- hermes-theme.css ---------------- */
+/* Hermes 主题覆盖：把 dooit-site 从「Vercel 纯黑白灰」调成 Hermes 深色质感。
+   - 主区 #1d1f22（整站主背景 = Hermes 石墨画布，用户指定），顶栏与侧栏同底；
+     发送框玻璃浮层；卡片/弹层保留分层
+   - 基调黑白灰 + Hermes 蓝点缀（唯一彩 #5b9bff）：Sessions 方形矩与标题、波点矩阵、
+     模块 tab / 筛选高亮；填充按钮近白底黑字
+   - 文字改透明度分层（94% / 74% / 54%），比固定灰值更柔和
+   本节拼接于 vercel 层之后（顺序同旧多文件引入），同选择器后写者赢；组件级用 !important 压过 scoped。 */
+
+html.dark,
+html.dark.tui-theme-default {
+  /* --- 背景：主区 / 顶栏 / 侧栏统一 #1d1f22（Hermes 石墨画布），
+     卡片保留 Hermes 分层（soft/elv 同 --do-* 同步抬升） --- */
+  --vp-c-bg: #1d1f22; /* 主区：#1d1f22 */
+  --vp-c-bg-alt: #1d1f22;
+  --vp-c-bg-elv: #2a2c2f;
+  --vp-c-bg-soft: #26292d;
+  --vp-c-gutter: #000000;
+  --vp-sidebar-bg-color: #000000; /* 文档侧栏：与主区同黑 */
+
+  /* --- 文字透明度分层 --- */
+  --vp-c-text-1: rgba(255, 255, 255, 0.94);
+  --vp-c-text-2: rgba(255, 255, 255, 0.74);
+  --vp-c-text-3: rgba(255, 255, 255, 0.54);
+
+  /* --- 边框 / 分隔（蓝灰 hairline） --- */
+  --vp-c-border: rgba(255, 255, 255, 0.1);
+  --vp-c-divider: rgba(255, 255, 255, 0.1);
+  --vp-c-divider-light: rgba(255, 255, 255, 0.06);
+  --vp-c-divider-dark: rgba(255, 255, 255, 0.16);
+
+  /* --- 品牌色 → 黑白灰阶（近白强调，深底可读） --- */
+  --vp-c-brand-1: #e8e8ec; /* 近白：文字 / 图标 / 焦点边 / 光标 */
+  --vp-c-brand-2: #f4f4f6; /* 近白：主按钮底 */
+  --vp-c-brand-3: #ffffff; /* 纯白：hover 提亮 */
+  --vp-c-brand-soft: rgba(255, 255, 255, 0.08); /* 白 tint：选中态 / 芯片底 */
+
+  /* --- 中性色 / 默认色 跟随品牌蓝阶 --- */
+  --vp-c-default-1: #e4e4e4;
+  --vp-c-default-2: #b4b4b4;
+  --vp-c-default-3: #6f6f6f;
+  --vp-c-default-soft: rgba(255, 255, 255, 0.06);
+  --vp-c-gray-1: #e4e4e4;
+  --vp-c-gray-2: #b4b4b4;
+  --vp-c-gray-3: #6f6f6f;
+  --vp-c-gray-soft: rgba(255, 255, 255, 0.06);
+  --vp-c-neutral: #fafafa;
+  --vp-c-neutral-inverse: #000000;
+
+  /* --- 语义色：危险 → Hermes 深色红 --- */
+  --vp-c-danger-1: #e75e78;
+  --vp-c-danger-2: #e75e78;
+  --vp-c-danger-3: #b23a52;
+  --vp-c-danger-soft: rgba(231, 94, 120, 0.14);
+  --vp-c-red-1: #e75e78;
+  --vp-c-red-2: #e75e78;
+  --vp-c-red-3: #b23a52;
+  --vp-c-red-soft: rgba(231, 94, 120, 0.14);
+  --vp-c-warning-1: #e7b75e;
+  --vp-c-warning-soft: rgba(231, 183, 94, 0.14);
+
+  /* --- 按钮：主按钮 = 近白底黑字（黑白灰） --- */
+  --vp-button-brand-bg: #f4f4f6;
+  --vp-button-brand-text: #101014;
+  --vp-button-brand-border: transparent;
+  --vp-button-brand-hover-bg: #ffffff;
+  --vp-button-brand-hover-text: #101014;
+  --vp-button-brand-hover-border: transparent;
+  --vp-button-brand-active-bg: #e2e2e6;
+  --vp-button-brand-active-text: #101014;
+  --vp-button-brand-active-border: transparent;
+  --vp-button-alt-bg: transparent;
+  --vp-button-alt-text: rgba(255, 255, 255, 0.94);
+  --vp-button-alt-border: rgba(255, 255, 255, 0.16);
+  --vp-button-alt-hover-bg: rgba(255, 255, 255, 0.08);
+  --vp-button-alt-hover-text: rgba(255, 255, 255, 0.94);
+  --vp-button-alt-hover-border: rgba(255, 255, 255, 0.24);
+  --vp-button-alt-active-bg: rgba(255, 255, 255, 0.12);
+
+  /* --- 输入 --- */
+  --vp-input-bg-color: #161618;
+  --vp-input-border-color: rgba(255, 255, 255, 0.14);
+
+  /* --- 代码 --- */
+  --vp-code-block-bg: #121214;
+  --vp-code-bg: rgba(255, 255, 255, 0.07);
+  --vp-code-color: #ededed;
+
+  /* TUI 代码组跟随 */
+  --vp-tui-code-group-bg: #121214;
+  --vp-tui-code-group-border-color: rgba(255, 255, 255, 0.1);
+  --vp-tui-code-group-tabs-bg: #161618;
+  --vp-tui-code-group-tabs-label-active-bg: #e8e8ec; /* 激活标签：近白底 */
+  --vp-tui-code-group-tabs-label-active-fg: #101014;
+  --vp-tui-code-copy-bg: rgba(255, 255, 255, 0.06);
+  --vp-tui-code-copy-bg-hover: rgba(255, 255, 255, 0.12);
+  --vp-tui-code-copy-border-color: rgba(255, 255, 255, 0.12);
+
+  /* TUI 边框与表格 */
+  --vp-tui-border-color: rgba(255, 255, 255, 0.1);
+  --vp-tui-c-bg: var(--vp-c-bg);
+  --vp-tui-table-bg: #000000;
+  --vp-tui-table-row-alt-bg: #121214;
+  --vp-tui-table-header-bg: rgba(255, 255, 255, 0.05);
+  --vp-tui-table-header-fg: rgba(255, 255, 255, 0.94);
+  --vp-tui-table-border-color: rgba(255, 255, 255, 0.1);
+  --vp-tui-table-header-border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* --- 组件级：会话左侧栏与主区一样纯黑（顶栏已黑，chrome 统一全黑） --- */
+.ds-side {
+  background: var(--do-bg) !important; /* 与主区同底（--do-bg） */
+  border-right: 1px solid rgba(255, 255, 255, 0.04) !important; /* Hermes 同款近隐形：更细更暗（原 .08 在 775px 长线上显眼） */
+}
+
+/* --- 组件级：发送框 = 比画布更暗的沉槽（Hermes composer 输入井）：实底 #101114（用户指定，
+   比页底 #1d1f22 还暗，矩形整体凹下一档；此前 elv 72% 玻璃浮层方向已弃） --- */
+.ds-bar {
+  background: #101114 !important;
+  border-color: rgba(255, 255, 255, 0.08) !important; /* hairline 收一档：Hermes 边框近乎隐形；
+     聚焦也保持此 hairline，不加白边（用户：选中不白边） */
+  border-radius: 3px !important; /* Hermes 近直角：composer 已压成 32px 矮条，5px 显圆 → 收到 3px */
+}
+.ds-k-input {
+  background: var(--do-bg) !important; /* 弹层内输入：回退到页面底，形成凹槽 */
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+/* --- 组件级：记忆面板主按钮 = 近白底黑字（黑白灰） --- */
+.ds-mp-btn:not(.ds-mp-btn--quiet):not(.ds-k-cancel) {
+  background: #f2f2f5 !important;
+  border-color: #f2f2f5 !important;
+  color: #121216 !important;
+}
+.ds-mp-btn:not(.ds-mp-btn--quiet):not(.ds-k-cancel):hover:not(:disabled) {
+  background: #ffffff !important;
+  border-color: #ffffff !important;
+  filter: none !important;
+}
+
+/* --- 组件级：选中对话背景：由下方「流光选中态」完整定义（白 tint 旧块已并除） --- */
+
+/* --- 组件级：用户消息 = Hermes「独占一行」卡片（user-message.tsx 同构：w-full +
+   rounded-xl + 1px 描边，文字左对齐，不再是右对齐气泡）。底色直接收口 Hermes
+   nous 深色混算结果：userBubble #07162c ×46% + neutral-card #161618 → #0f1621，
+   描边 userBubbleBorder #30363d（令牌：--do-user-bg / --do-user-border）--- */
+.ds-user {
+  width: 100% !important;
+  max-width: none !important;
+  box-sizing: border-box !important;
+  background: var(--do-user-bg) !important;
+  border: 1px solid var(--do-user-border) !important;
+  border-radius: 3px !important; /* Hermes radius-scalar 0.2 缩放 rounded-xl≈2.4→取 3px：近乎直角，仅一丝圆角 */
+  color: rgba(255, 255, 255, 0.94) !important;
+  font-size: 13px !important;
+  text-align: left !important;
+  white-space: pre-wrap !important;
+  word-break: break-word !important;
+  line-height: 1.5 !important;
+  padding: 8px 12px !important; /* Hermes px-3 py-2 */
+}
+
+/* --- 顶栏毛玻璃：黑底 --- */
+.VPNavBar {
+  background-color: rgba(0, 0, 0, 0.72) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+.VPNavScreen {
+  background-color: rgba(0, 0, 0, 0.92) !important;
+}
+
+/* --- 选中文本 --- */
+::selection {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+/* ============================================================
+   侧边栏精确对齐 Hermes row-geometry.ts：
+   26px 单行 · 14px 格子放 6px 圆点 · 13px 次色标题 · 10px meta
+   ============================================================ */
+
+/* 侧栏宽度：不再跟 VitePress 的 272px，收窄到 240px 内容宽
+   （含左右内距 8 + 右发丝 1 后外宽 ≈249）——用户要求侧栏往窄收。
+   栏头是装饰性 Home|Doc|Today 字标（ModuleRailTabs）+ Sessions 会话列表；
+   38px 顶条是拖拽区，红绿灯同排的收起钮（.st-nav__side）加右上齿轮。 */
+.ds-side {
+  width: 240px !important;
+}
+
+/* 会话行：单行 flex，26px 高，6px gap，圆角收成 Hermes 缩放后的 rounded-md≈2px
+   —— 选中底/流光带是近直角长条，不再有明显胶囊感（SIDEBAR_ROW_MIN_H / GAP）。
+   position:relative 给行内流光弧环（.ds-convo .ds-arc）做定位基准 */
+.ds-convo {
+  position: relative !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  min-height: 26px !important;
+  padding: 0 30px 0 8px !important; /* pl-2；右侧 30px 留给 hover ⋮ 菜单钮 */
+  border-radius: 2px !important;
+}
+.ds-convo-item {
+  border-radius: 2px !important;
+}
+
+/* 当前选中会话行基座：常驻柔和选中底（白色 tint，静止不动效） */
+.ds-convo-item.is-active .ds-convo {
+  background-color: var(--vp-c-brand-soft) !important;
+}
+
+/* AI 思考中（sending）：同一行叠加一条柔光带循环扫过（白色流光只在思考时出现；
+   平时行上只有静态选中底）。行前景是 title/meta 文字，光带只动背景，不裁剪文字 */
+.ds-convo-item.is-streaming .ds-convo {
+  background-image: linear-gradient(
+    100deg,
+    transparent 42%,
+    rgba(255, 255, 255, 0.07) 47%,
+    rgba(255, 255, 255, 0.28) 50%,
+    rgba(255, 255, 255, 0.07) 53%,
+    transparent 58%
+  ) !important;
+  background-size: 260% 100% !important;
+  background-position: 120% 0 !important;
+  animation: ds-row-shine 2.6s linear infinite;
+}
+/* 思考中该行只是多一道流光：行内文字/点不随 disabled 半透明压暗（其它行照旧压暗锁定） */
+.ds-convo-item.is-streaming .ds-convo:disabled {
+  opacity: 1 !important;
+  cursor: default !important;
+}
+@keyframes ds-row-shine {
+  0% {
+    background-position: 120% 0;
+  }
+  100% {
+    background-position: -120% 0;
+  }
+}
+
+/* 标题：13px（0.8125rem）次色 74%，1.35 行高，regular（SIDEBAR_ROW_LABEL） */
+.ds-convo-title {
+  flex: 1 !important;
+  min-width: 0 !important;
+  font-size: 13px !important;
+  line-height: 1.35 !important;
+  font-weight: 400 !important;
+  color: rgba(255, 255, 255, 0.74) !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ds-convo-item:hover .ds-convo-title,
+.ds-convo-item.is-active .ds-convo-title {
+  color: rgba(255, 255, 255, 0.94) !important;
+}
+
+/* 行尾 ⋮ 菜单钮：更纤细、贴合单行（hover / 选中 / 菜单展开时显示，scoped 已有 opacity 逻辑） */
+.ds-convo-more {
+  height: 22px !important;
+  border-radius: 5px !important;
+}
+
+/* 流光环基座（掩膜 + 渐变环 + 旋转的公共段）：现只被会话行弧环 .ds-convo .ds-arc 使用——
+   发送框已撤掉光环，不再有此结构；绝对定位基准由使用者自带（.ds-convo position:relative） */
+.ds-arc {
+  pointer-events: none;
+  position: absolute;
+  overflow: hidden;
+  border-radius: 8px !important; /* Hermes 小圆角（原散落两处的 21px/8px 已合并，取 8px 终态） */
+  inset: -3px;
+  padding: 1.5px;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+.ds-arc::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 300%;
+  height: 300%;
+  background: linear-gradient(
+    160deg,
+    transparent 0%,
+    transparent 15%,
+    #ffffff 20%,
+    rgba(255, 255, 255, 0.45) 25%,
+    transparent 35%,
+    transparent 40%,
+    transparent 55%,
+    #ffffff 60%,
+    rgba(255, 255, 255, 0.45) 65%,
+    transparent 75%,
+    transparent 80%,
+    transparent 95%,
+    #ffffff 100%
+  );
+  will-change: transform;
+  animation: ds-arc-spin 2.23s linear infinite;
+}
+@keyframes ds-arc-spin {
+  0% {
+    transform: translate(-10%, -10%);
+  }
+  100% {
+    transform: translate(-50%, -50%);
+  }
+}
+
+/* 会话行复用同一圈流光弧环：贴行边缘，与输入框光环同款同速（白色流光；模板里仅 sending（AI 思考中）
+   且是该会话时才挂出）。行圆角已收成 2px，环 inset -1px，故外缘圆角 = 行 2px + 1px 外扩 = 3px：
+   与行同心、近直角，不再残留 6px 圆角 */
+.ds-convo .ds-arc {
+  inset: -1px !important;
+  border-radius: 3px !important;
+  padding: 1.5px !important;
+}
+
+/* Sessions 分组标题 + 右端新建会话 + 号（Hermes：与模块 rail 同色系小图标钮）。
+   该行现在是会话列表滚动容器内的组标题，跟在 Pinned 置顶组之后（Pinned 空则为首行）：
+   顶部内距 6px（从 12 收紧：模块矩形下方余白偏大，用户要求 Sessions 上移贴近）；
+   左 4px 让标题与 .ds-pin-head 对齐到列表已垫 4px 外的同 x12（会话行左缘由 .ds-convo
+   左 margin 4px 同步收到 x12）；右 0 + space-between 让 + 号右边缘与会话行右边缘同齐
+   （行右缘在列尾 x240，+ 随之收齐） */
+.ds-sessions-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0 4px 4px;
+}
+.ds-sessions-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--do-accent); /* Sessions 标题字随方形矩同蓝（用户要求）；原 rgba 白 .36 已弃 */
+}
+.ds-new {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  width: 20px !important;
+  height: 20px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  border-radius: 5px !important;
+  background: transparent !important;
+  color: rgba(255, 255, 255, 0.54) !important;
+  opacity: 0;
+  cursor: pointer;
+  transition: opacity 0.15s, background 0.15s, color 0.15s;
+}
+.ds-sessions-head:hover .ds-new,
+.ds-new:focus-visible {
+  opacity: 1;
+}
+.ds-new:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: rgba(255, 255, 255, 0.94) !important;
+}
+
+/* 发送按钮：圆形 + arrow-up 图标（Hermes PRIMARY_ICON_BTN：前景底/背景字高对比） */
+.ds-send {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  width: 24px !important;
+  height: 24px !important;
+  border: none !important;
+  border-radius: 50% !important;
+  padding: 0 !important;
+  background: rgba(255, 255, 255, 0.94) !important;
+  color: #000000 !important;
+  cursor: pointer;
+  transition: background-color 0.15s !important;
+}
+.ds-send:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.85) !important; /* Hermes hover bg-foreground/90：实心钮微降一档 */
+}
+.ds-send:disabled {
+  background: rgba(255, 255, 255, 0.28) !important;
+  color: rgba(0, 0, 0, 0.55) !important;
+  cursor: not-allowed;
+}
+.ds-stop {
+  display: block;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  background: currentColor;
+}
+
+/* 其余比例：正文更纤细（字号对齐 Hermes conversation 13px；.ds-user 的 13px 已并进顶部整条）。
+   左内缩 13px = .ds-user 的 1px 边框 + 12px 左内边距：AI 回答的文字列跟用户消息“框内文字”同起点，
+   不是跟卡片外缘对齐。 */
+.ds-answer {
+  font-size: 13px !important;
+  padding-left: 13px !important;
+}
+.ds-field {
+  font-size: 13px !important;
+  color: rgba(230, 237, 243, 0.94) !important; /* Hermes text-foreground：主题前景 94%（GitHub dark #e6edf3） */
+}
+
+/* 圆角体系说明：Hermes --radius-scalar:0.2，全部小圆角（rounded-md≈2px … 2xl≈4.8px）。
+   输入框 5px / 弹层 8px / 用户气泡 3px / 图标钮 4px 均已按 Hermes 值并入对应规则，
+   原「锐利化」一节的三组重复覆盖已合并删除。 */
+
+/* ============================================================
+   dmx 双股螺旋 Twin Helix（dotmatrix.zzzzshawn.cloud DotmCircular13）
+   —— 全站「等待」统一用这套（灰 = --do-text-2，不再用蓝）：AI 思考中 · 欢迎字标加载
+   每个点的 @keyframes（ds-h{c}{r}）由 dmx-dots.js 按引用站 resolver
+   的 28 步亮度曲线生成并注入；这里只提供尺寸、周期与静止底亮度。
+   ============================================================ */
+.ds-dmx {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  line-height: 0;
+  color: var(--do-text-2); /* 思考/等待圆点阵 = 灰（随「正在思考…」文字同阶），不要蓝 */
+}
+.ds-dmx svg {
+  display: block;
+  width: 16px;
+  height: 16px;
+}
+.ds-dmx--lg svg {
+  width: 44px;
+  height: 44px;
+}
+.ds-dmx-dot {
+  opacity: 0.07; /* 静止姿态由各点 inline style 覆盖；动画未开始时兜底 */
+  animation-duration: 1.75s;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  animation-fill-mode: both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ds-dmx-dot {
+    animation: none !important; /* 停在 inline opacity 的 θ=0 静止姿态 */
+  }
+}
+
+/* 行尾 ⋮ 菜单钮：Hermes kebab = size-5(20px) + rounded 4px + 图标 14px */
+.ds-convo-more {
+  width: 20px !important;
+  height: 20px !important;
+  border-radius: 4px !important;
+}
+
+/* 弹层：rounded-lg ≈ 小圆角 */
+.ds-mpanel {
+  border-radius: 8px !important;
+}
+
+/* 记忆面板按钮：pill → 小圆角纤细 */
+.ds-mp-btn {
+  border-radius: 6px !important;
+  padding: 4px 12px !important;
+  font-size: 12px !important;
+  font-weight: 400 !important;
+}
+
+/* 会话行状态点：当前会话 = 绿点；其它 = 更小的灰色点。
+   只表达「当前 / 其它」两种状态，不随是否有消息或是否在生成而变化 */
+.ds-dot {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  display: grid;
+  place-items: center;
+}
+.ds-dot::before {
+  content: '';
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.28); /* 其它会话：小灰点 */
+  transition: background-color 0.15s, width 0.15s, height 0.15s;
+}
+.ds-dot.is-active::before {
+  width: 6px;
+  height: 6px;
+  background: #3fb950; /* 当前会话：绿点 */
+}
+
+/* Sessions 标题前的 3×3 方形波点矩阵（Hermes 蓝）。做法：一个 10×10 viewBox 的内联 SVG
+   data-URI 直接画 9 颗 2px 圆角方点（x/y 取 1/4/7、间距 1px、四周留 1px）；元素尺寸与
+   viewBox 一比一、无缩放采样，Retina 下依旧锐利——比“小平铺图 + background-position 位移”
+   的旧做法更接近 Hermes 的点阵质感。 */
+.ds-sessions-mark {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2010%2010%27%20fill%3D%27%235b9bff%27%3E%3Crect%20x%3D%271%27%20y%3D%271%27%20width%3D%272%27%20height%3D%272%27%20rx%3D%270.5%27%2F%3E%3Crect%20x%3D%271%27%20y%3D%274%27%20width%3D%272%27%20height%3D%272%27%20rx%3D%270.5%27%2F%3E%3Crect%20x%3D%271%27%20y%3D%277%27%20width%3D%272%27%20height%3D%272%27%20rx%3D%270.5%27%2F%3E%3Crect%20x%3D%274%27%20y%3D%271%27%20width%3D%272%27%20height%3D%272%27%20rx%3D%270.5%27%2F%3E%3Crect%20x%3D%274%27%20y%3D%274%27%20width%3D%272%27%20height%3D%272%27%20rx%3D%270.5%27%2F%3E%3Crect%20x%3D%274%27%20y%3D%277%27%20width%3D%272%27%20height%3D%272%27%20rx%3D%270.5%27%2F%3E%3Crect%20x%3D%277%27%20y%3D%271%27%20width%3D%272%27%20height%3D%272%27%20rx%3D%270.5%27%2F%3E%3Crect%20x%3D%277%27%20y%3D%274%27%20width%3D%272%27%20height%3D%272%27%20rx%3D%270.5%27%2F%3E%3Crect%20x%3D%277%27%20y%3D%277%27%20width%3D%272%27%20height%3D%272%27%20rx%3D%270.5%27%2F%3E%3C%2Fsvg%3E");
+}
+
+/* ============================================================
+   DESIGN.md 原则落地（剩余部分）
+   ============================================================ */
+
+/* borderless elevation：浮层用 shadow-nous（向下偏重分层）+ stroke-nous hairline，
+   不用粗边框 + 大块阴影（DESIGN.md "Surfaces & elevation"） */
+.ds-shell {
+  --shadow-nous:
+    0 0.125rem 0.25rem -0.125rem color-mix(in srgb, #000 55%, transparent),
+    0 0.5rem 0.75rem -0.375rem color-mix(in srgb, #000 50%, transparent),
+    0 1.25rem 1.75rem -0.875rem color-mix(in srgb, #000 45%, transparent);
+  --stroke-nous: color-mix(in srgb, rgba(255, 255, 255, 0.9) 4%, transparent);
+}
+.ds-mpanel {
+  background: var(--do-bg-elv) !important; /* elevated 表面（比主区亮） */
+  border: 1px solid var(--stroke-nous) !important;
+  box-shadow: var(--shadow-nous) !important;
+}
+
+/* 图标统一 14px（DESIGN.md：SVG 继承 size-3.5，不单独设） */
+.ds-ic {
+  width: 14px !important;
+  height: 14px !important;
+}
+
+/* 分隔线更细：默认 in-panel hairline = stroke-tertiary（更轻） */
+.ds-mp-item {
+  border-bottom-color: rgba(255, 255, 255, 0.06) !important;
+}
+.ds-mp-list {
+  border-top-color: rgba(255, 255, 255, 0.06) !important;
+}
+.ds-mp-foot {
+  border-top-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+/* icon 按钮统一 4px 圆角（DESIGN.md "Buttons"：only icon buttons carry 4px radius） */
+.ds-new {
+  border-radius: 4px !important;
+}
+
+/* 动效：快速功能过渡 ~100ms（DESIGN.md "Motion"） */
+.ds-convo,
+.ds-new,
+.ds-convo-more,
+.ds-send {
+  transition-duration: 0.1s !important;
+}
+
+/* prefers-reduced-motion：超出淡入淡出的动效全部关掉 */
+@media (prefers-reduced-motion: reduce) {
+  .ds-arc::before,
+  .ds-convo-item.is-streaming .ds-convo {
+    animation: none !important;
+  }
+  /* 光带停住时整层背景去掉，只留静态选中底色，避免半截亮带停在行里 */
+  .ds-convo-item.is-streaming .ds-convo {
+    background-image: none !important;
+  }
+  /* 行内弧环整圈撤掉（静止的环会留下一条不动的光条） */
+  .ds-convo .ds-arc {
+    display: none !important;
+  }
+}
+
+/* ============================================================
+   窄屏（<960px）VitePress 默认顶栏 Hermes 化
+   （≥960px 单窗口布局把顶栏整体隐藏，见文件末尾）
+   ============================================================ */
+
+/* 顶栏标题：纤细 */
+.VPNavBarTitle .title {
+  font-size: 13px !important;
+  font-weight: 500 !important;
+}
+
+/* 正文：13px 对话刻度（Hermes conversation-text 0.8125rem），标题靠字号分层 */
+.vp-doc {
+  font-size: 13px !important;
+}
+.vp-doc h1 {
+  font-size: 18px !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.01em;
+}
+.vp-doc h2 {
+  font-size: 16px !important;
+  font-weight: 600 !important;
+}
+.vp-doc p {
+  font-size: 13px !important;
+  line-height: 1.5 !important;
+}
+
+/* 链接：近白灰（黑白灰基调） */
+@layer overrides {
+  html.dark.tui-theme-default .vp-doc a:not(.ml-link) {
+    color: #dcdce1 !important;
+  }
+  html.dark.tui-theme-default .vp-doc a:not(.ml-link):hover {
+    color: #ffffff !important;
+  }
+}
+
+/* ============================================================
+   正文文档 Hermes 化（对齐 assistant-ui markdown 渲染的间距与代码块）
+   ============================================================ */
+
+/* 段落：紧凑间距（Hermes --paragraph-gap 0.7rem，顶部留、底部清零防翻倍） */
+.vp-doc p {
+  margin-block: 0.7rem 0 !important;
+}
+
+/* 标题：section break（1rem 上 / 0.25rem 下），去掉 h2 顶部分隔线改纯间距 */
+.vp-doc h1,
+.vp-doc h2,
+.vp-doc h3,
+.vp-doc h4 {
+  margin-block: 1rem 0.25rem !important;
+}
+.vp-doc h1 {
+  font-size: 18px !important;
+  font-weight: 600 !important;
+}
+.vp-doc h2 {
+  font-size: 16px !important;
+  font-weight: 600 !important;
+}
+.vp-doc h3 {
+  font-size: 14px !important;
+  font-weight: 600 !important;
+}
+.vp-doc h4 {
+  font-size: 13px !important;
+  font-weight: 600 !important;
+}
+@layer overrides {
+  html.dark.tui-theme-default .vp-doc h2 {
+    border-top: none !important;
+    padding-top: 0 !important;
+  }
+}
+
+/* 代码块：深色卡片 + hairline 边框 + 小圆角（Hermes code-card） */
+@layer overrides {
+  html.dark.tui-theme-default .vp-doc pre,
+  html.dark.tui-theme-default .vp-doc div[class*="language-"] {
+    background: #121214 !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 6px !important;
+  }
+  html.dark.tui-theme-default .vp-doc :not(pre) > code {
+    background: rgba(255, 255, 255, 0.07) !important;
+    border-radius: 3px !important;
+    color: #eaeaee !important;
+  }
+}
+
+/* 列表：紧凑间距 */
+.vp-doc ul,
+.vp-doc ol {
+  margin-block: 0.5rem 0 !important;
+}
+.vp-doc li + li {
+  margin-top: 0.3rem;
+}
+
+/* 表格：hairline 边框更细，表头 Hermes 灰底 */
+@layer overrides {
+  html.dark.tui-theme-default .vp-doc th {
+    background: rgba(255, 255, 255, 0.06) !important;
+    color: #e8e8ec !important;
+  }
+  html.dark.tui-theme-default .vp-doc table {
+    border-color: rgba(255, 255, 255, 0.1) !important;
+  }
+}
+
+
+
+/* ============================================================
+   Hermes 式「全宽顶栏 + 无导航」：≥960px 桌面隐藏 VitePress 顶部导航
+   （.VPNavBar / .VPNavScreen / .VPLocalNav）。
+   SectionTabs 是一条横贯窗口的 38px 顶栏（fixed 在 y=0），
+   应用壳 .ds-shell 用 margin-top:38px 整体让开，高度相应收 38px ——
+   顶栏与内容互不重叠，正文/列表从 y=38 直通底。
+   --vp-nav-height 仍归 0，避免 VitePress .VPContent 再叠一层偏移。
+   Electron 里 macOS traffic light 悬浮在顶栏左（x24 / y12），与 tab 同层。
+   移动端（<960px）保留导航与偏移不动，本条自动隐藏。
+   ============================================================ */
+@media (min-width: 960px) {
+  html.dark.tui-theme-default {
+    --vp-nav-height: 0px !important;
+  }
+  html.dark.tui-theme-default .VPNavBar,
+  html.dark.tui-theme-default .VPNavScreen,
+  html.dark.tui-theme-default .VPLocalNav {
+    display: none !important;
+  }
+  /* 全宽 38px 顶栏把应用壳整体下移让位（高度同步收 38px），
+     rail 无需再在内部留栏头空间（各自原生 16px 呼吸即可） */
+  html.dark.tui-theme-default .ds-shell {
+    margin-top: 38px !important;
+    height: calc(100vh - 38px) !important;
+  }
+}
+
+/* ============================================================
+   弹层原语（overlay / mpanel 基座 + 通用小件）
+   —— 记忆面板与 Key 设置弹层共用（原是 DeepSeekDocChat scoped，
+   拆出组件后放全局；面板专有类仍留在各自组件 scoped）。
+   上面已有的 Hermes !important 微调（圆角/表面/按钮）照常覆盖本段基座。
+   ============================================================ */
+.ds-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.34);
+}
+.ds-mpanel {
+  display: flex;
+  flex-direction: column;
+  width: min(480px, 94vw);
+  max-height: min(580px, 86vh);
+  background: var(--vp-c-bg);
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 16px;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+}
+.ds-mp-head {
+  display: flex;
+  align-items: center;
+  padding: 16px 18px 6px;
+}
+.ds-mp-title {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--vp-c-text-1);
+}
+.ds-mp-title .ds-ic {
+  color: var(--vp-c-brand-1);
+}
+.ds-mp-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--vp-c-text-3);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.ds-mp-close:hover {
+  background: var(--vp-c-bg-soft);
+  color: var(--vp-c-text-1);
+}
+.ds-ic {
+  display: inline-block;
+  flex: none;
+  width: 15px;
+  height: 15px;
+  margin-right: 6px;
+  vertical-align: -0.15em;
+}
+.ds-mp-foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 18px 16px;
+  border-top: 1px solid var(--vp-c-divider);
+}
+.ds-mp-count {
+  font-size: 12px;
+  color: var(--vp-c-text-3);
+}
+.ds-mp-spacer {
+  flex: 1;
+}
+.ds-mp-btn {
+  border: 1px solid var(--vp-c-brand-1);
+  background: var(--vp-c-brand-1);
+  color: #fff;
+  border-radius: 999px;
+  padding: 7px 16px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s, opacity 0.2s;
+}
+.ds-mp-btn:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+.ds-mp-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+/* （旧「清空全部」的红色危险幽灵钮与 is-arm 武装态已随按钮下线删除；
+   压缩整理为透明 hairline 描边钮，与 Key 弹窗 Cancel 同套，见下节 Hermes 收口） */
+
+/* ============================================================
+   Hermes 收口：与旧基础层残留及第三方 tui 字体压制对抗的最终钉死层。
+   - vitepress-theme-tui 在 @layer overrides 里用 `.vp-tui-raw *` 把 shell 内
+     一切字体压成 base —— 加进同一层、用更高特指度的选择器把它赢回，
+     让代码/密钥输入这些 mono 语境真正落到 Geist Mono
+   - vercel 层老的高特指 html.dark 规则会把 .ds-k-cancel 钉成纯白字；
+     Hermes alt-button 用 !important 压过它
+   ============================================================ */
+
+@layer overrides {
+  .vp-tui-raw .ds-k-input,
+  .vp-tui-raw code,
+  .vp-tui-raw pre {
+    font-family: var(--vp-font-family-mono) !important;
+  }
+}
+
+/* Key 弹窗 Cancel = Hermes alt button：透明底 + hairline 描边 + 近白 94% 文字 */
+.ds-k-cancel {
+  background: transparent !important;
+  color: rgba(255, 255, 255, 0.94) !important;
+  border-color: rgba(255, 255, 255, 0.16) !important;
+}
+.ds-k-cancel:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.24) !important;
+  color: rgba(255, 255, 255, 0.94) !important;
+  filter: none !important;
+}
+
+/* 记忆弹层「压缩整理」同为 Hermes alt button（维护操作，不再用旧 Clear all 的危险红） */
+.ds-mp-btn--quiet {
+  background: transparent !important;
+  color: rgba(255, 255, 255, 0.94) !important;
+  border-color: rgba(255, 255, 255, 0.16) !important;
+}
+.ds-mp-btn--quiet:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.24) !important;
+  color: rgba(255, 255, 255, 0.94) !important;
+  filter: none !important;
+}
+
+
+/* ---------------- bare-shell.css ---------------- */
+/* 裸 Vue 壳基线：原由 VitePress 外壳承担的三件事，去掉 VitePress 后由这里接管。
+   1) html/body 深色底 + 零外边距（index.html 的 inline 样式只保证首帧，装完后再兜一层）；
+   2) --vp-nav-height 归 0，避免遗留组件按 VitePress 导航高度让位；
+   3) .ds-shell 的 38px 顶栏让位不再依赖 hermes 的 ≥960px 媒体查询 —— 任何宽度都生效，
+      窄窗下 VitePress 导航本就不存在，行为与旧 Electron 注入规则（任意宽度无顶栏）一致。 */
+html.dark.tui-theme-default {
+  background: var(--do-bg); /* 与令牌层同底（#1d1f22） */
+  --vp-nav-height: 0px;
+}
+
+body {
+  margin: 0;
+  background: var(--do-bg); /* 与令牌层同底（#1d1f22） */
+}
+
+html.dark.tui-theme-default .ds-shell {
+  margin-top: 38px !important;
+  height: calc(100vh - 38px) !important;
+}
+
+/* --- 滚动条整体隐藏（Hermes：不显示滚动条，内容仍照常滚动） ---
+   桌面端各滚动区（会话侧栏 / 对话流 / 板块页）都不留条；Firefox 走 scrollbar-width，
+   Chromium/Electron 走 ::-webkit-scrollbar 归零。 */
+html {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+html::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+* {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+*::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+

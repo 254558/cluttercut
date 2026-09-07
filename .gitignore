@@ -1,0 +1,48 @@
+# ZCode 工具状态（计划/会话文件，不属仓库内容）
+.zcode/
+# 编辑器 / macOS
+.vscode/
+.DS_Store
+
+# 虚拟环境（历史遗留：顶栏 rain 的 python 渲染环境已删除，保留通用条目以防再引入）
+__pycache__/
+*.py[cod]
+.env
+.venv
+
+# Vite / 构建产物
+node_modules/
+site/dist
+# electron-builder 打包产物（.app/.dmg/.zip，体积大不入库；site/package.json build.directories.output）
+site/release
+
+# site/data/ 是 AI 服务的个人数据目录（原 site/docs/.vitepress/ 整体更名）——
+# 下面的条目逐文件守护其个人数据；目录本身不含任何页面代码。
+
+# 本地密钥（DeepSeek API Key），切勿提交到公开仓库
+site/data/deepseek-key.txt
+
+# 旧 Doc/今日 模块遗留的个人数据（只随备份脚本带走，不再读写，绝不入库）
+site/data/ai-content/
+site/data/ai-meta.json
+site/data/ai-archive/
+site/data/ai-tasks.json
+
+# 长期记忆（个人画像，绝不入库）
+site/data/ai-memory.json
+
+# 压缩整理时被替换/合并的旧记忆归档（当前活跃读写，同属个人画像，绝不入库）
+site/data/ai-memory-archive.json
+
+# 从长期记忆合成的「用户画像快照」（聊天时恒定注入；个人画像，绝不入库）
+site/data/ai-profile.json
+
+# 待办清单（Todo 板块手动维护，AI 只读；个人数据，绝不入库）
+site/data/ai-todo.json
+
+# 对话记录 SQLite（个人数据，绝不入库；含备份/恢复存档）
+site/data/ai-chat.db*
+site/data/ai-chat-recovery.txt
+
+# 长期记忆的本地向量索引（个人数据向量化，同样绝不入库）
+site/data/ai-memory-vec.db*

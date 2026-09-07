@@ -1,0 +1,60 @@
+{
+  "engines": {
+    "node": ">=22.5.0"
+  },
+  "main": "electron/main.js",
+  "dependencies": {
+    "@huggingface/transformers": "^4.2.0",
+    "markdown-it": "^15.0.1",
+    "markdown-it-container": "^4.0.0",
+    "vue": "^3.5.42"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.8",
+    "electron": "^40.10.6",
+    "electron-builder": "^26.15.3",
+    "vite": "^8.2.2"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "ai": "node server/index.mjs",
+    "local": "node scripts/local.mjs",
+    "electron": "electron electron/main.js",
+    "electron:build": "vite build && electron-builder"
+  },
+  "build": {
+    "appId": "cloud.shawn.doit",
+    "productName": "ClutterCut",
+    "files": [
+      "electron/**/*",
+      "server/**/*",
+      "scripts/**/*",
+      "ui/**/*",
+      "dist/**/*",
+      "package.json"
+    ],
+    "extraMetadata": {
+      "main": "electron/main.js"
+    },
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "category": "public.app-category.productivity"
+    },
+    "directories": {
+      "output": "release"
+    },
+    "asarUnpack": [
+      "server/**/*",
+      "scripts/**/*",
+      "node_modules/@huggingface/**/*"
+    ]
+  },
+  "name": "dooit",
+  "productName": "ClutterCut",
+  "version": "0.1.0"
+}
