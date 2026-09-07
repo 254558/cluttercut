@@ -30,6 +30,10 @@ const error = ref("");
 const ready = ref(false); // 会话从本机存储载入完成后才可交互
 const thread = ref(null);
 const field = ref(null);
+// 新建会话行的入场动画：记最近一条新行的 id 与随机到的变体（fx-a/b/c），播完由计时器清掉
+const freshFx = ref({ id: "", v: -1 });
+let freshTimer = 0;
+let lastFresh = -1; // 避免连续两次抽到同一个变体
 
 /* ---------- 会话存储（读写/迁移/删除墓碑逻辑集中在 ../chat-persist.ts，这里只接状态） ---------- */
 // activate 声明在下方「会话切换」区——函数声明会提升，这里可直接引用；
@@ -39,6 +43,7 @@ const chatPersist = bindChatPersistence({ convos, activeId, ready, activate });
 // SPA 切页卸载前把最后一笔改动立刻提交并摘除 pagehide 监听，
 // 避免重挂载读到旧快照、或旧实例过后用过期整档覆盖新数据
 onBeforeUnmount(() => {
+  clearTimeout(freshTimer); // 入场动画计时器一并清掉，不留在卸载后的实例上
   chatPersist.dispose();
   closeSettings(); // 设置面板状态是应用级共享：离开时收掉，回来不残留
 });
@@ -64,6 +69,17 @@ function newChat() {
   const c = makeConvo();
   convos.value.unshift(c);
   activate(c.id);
+  // 新行入场动画：随机抽一种变体（跟上次不重复），播完清掉标记
+  let v;
+  do {
+    v = (Math.random() * 3) | 0;
+  } while (v === lastFresh);
+  lastFresh = v;
+  freshFx.value = { id: c.id, v };
+  clearTimeout(freshTimer);
+  freshTimer = setTimeout(() => {
+    if (freshFx.value.id === c.id) freshFx.value = { id: "", v: -1 };
+  }, 1100);
   focusField();
 }
 
@@ -544,6 +560,10 @@ async function streamAnswer(res, msg) {
               'is-active': c.id === activeId,
               'is-streaming': sending && c.id === activeId,
               'is-menu-open': menuFor === c.id,
+              'is-fresh': freshFx.id === c.id,
+              'fx-a': freshFx.id === c.id && freshFx.v === 0,
+              'fx-b': freshFx.id === c.id && freshFx.v === 1,
+              'fx-c': freshFx.id === c.id && freshFx.v === 2,
             }"
           >
             <button class="ds-convo" :disabled="sending" @click="selectChat(c.id)">
@@ -720,7 +740,8 @@ async function streamAnswer(res, msg) {
   transition: background 0.15s;
 }
 .ds-convo:disabled {
-  opacity: 0.6;
+  /* 思考中禁用只是挡住点击：会话行内容不做半透明压暗 */
+  opacity: 1;
   cursor: not-allowed;
 }
 .ds-convo-item:hover .ds-convo {
