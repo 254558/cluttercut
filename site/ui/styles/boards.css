@@ -24,16 +24,19 @@
   padding: 22px clamp(20px, 3vw, 96px) 64px;
 }
 
-/* ---------- 输入框（搜索 / 新增 / 行内编辑共用） ---------- */
+/* ---------- 输入框（搜索 / 新增 / 行内编辑共用） ----------
+   颜色收口 = 主页发送框（.ds-bar/.ds-field）：沉槽 #101114 比画布暗一档、
+   白发丝 hairline 描边、前景 Hermes foreground 94%；聚焦保持同款 hairline，
+   不加亮边也不加光环（用户指定：两板输入框与主页发送框一致，选中不白边，永久） */
 .mb-input,
 .tb-input {
   width: 100%;
   box-sizing: border-box;
   padding: 8px 12px;
-  border: 1px solid var(--do-divider);
+  border: 1px solid var(--do-divider); /* rgba(255,255,255,.08)：与主页发送框 hairline 同值 */
   border-radius: 2px; /* Hermes 近直角：文本框与行/复选框同尺，原 5px（--do-radius-md）显圆 */
-  background: var(--do-bg-elv);
-  color: var(--do-text-1);
+  background: #101114; /* 主页发送框沉槽同色（.ds-bar），比画布 #1d1f22 暗一档 */
+  color: rgba(230, 237, 243, 0.94); /* 主页输入前景同色（.ds-field，Hermes text-foreground 94%） */
   font: inherit;
   font-size: 13px;
   outline: none;
@@ -42,8 +45,8 @@
 }
 .mb-input:focus,
 .tb-input:focus {
-  border-color: var(--do-border-strong);
-  box-shadow: 0 0 0 3px var(--do-brand-soft);
+  border-color: var(--do-divider); /* 聚焦不变亮（不切 --do-border-strong），保持 hairline */
+  box-shadow: none; /* 去掉原 3px brand-soft 光环 = 「选中白边高亮」 */
 }
 .mb-input::placeholder,
 .tb-input::placeholder {
