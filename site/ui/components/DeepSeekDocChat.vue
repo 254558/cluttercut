@@ -322,6 +322,28 @@ function onKeydown(ev) {
   }
 }
 
+/* ---------- 输入框随内容增高 ----------
+ * 单行仍是 24px 矮条（行盒 18 + 上下 3px 内距）；写满一行后按内容逐行撑高发送槽，
+ * 到 FIELD_MAX 封顶，再长就退回框内滚动（滚动条全站隐藏，仍可滚）。 */
+const FIELD_MAX = 168;
+
+function autosize() {
+  const el = field.value;
+  if (!el) return;
+  el.style.height = "auto"; // 先归零到单行，否则删字时量到的还是旧高度、收不回去
+  el.style.height = Math.min(el.scrollHeight, FIELD_MAX) + "px";
+  el.style.overflowY = el.scrollHeight > FIELD_MAX ? "auto" : "hidden";
+  keepPinned(); // 发送槽长高会挤压消息区，贴底时补一次滚动，末条消息不被顶出视野
+}
+
+// v-model 变更（打字/粘贴/发送后清空）→ DOM 更新完再量高度
+watch(input, () => nextTick(autosize));
+// 从 Memory/Todo 切回聊天时输入框是重挂载的，按当前内容恢复高度
+watch(
+  () => appChrome.view,
+  () => nextTick(autosize),
+);
+
 /* ---------- 流式气泡：指令式直写 DOM ----------
  * 观察发现：本环境（Electron 内嵌/浏览器）在 fetch 流式进行期间，
  * Vue 的调度器不会逐帧 flush，DOM 会一直停在“正在思考…”直到流结束才整体渲染。
@@ -1034,11 +1056,14 @@ async function streamAnswer(res, msg) {
   font-size: 13px; /* 与全局 Hermes 13px 对齐；此值无 !important，仍以全局为准 */
   line-height: 18px;
   padding: 3px 0;
-  /* 外高 24px = 行盒 18 + 上下 3px 内距：与右侧圆形发送钮（24px）等高相切，不再上下悬空；
-     打字不把发送框顶高，长内容在框内滚动（滚动条已全站隐藏，仍可滚） */
-  height: 18px;
+  /* 外高 24px = 行盒 18 + 上下 3px 内距：单行时与右侧圆形发送钮（24px）等高相切；
+     多行由 autosize() 按 scrollHeight 逐行撑高（border-box，量到的高度即外高），
+     到 FIELD_MAX 封顶后改框内滚动 */
+  box-sizing: border-box;
+  height: 24px;
+  max-height: 168px;
   resize: none;
-  overflow-y: auto;
+  overflow-y: hidden;
 }
 .ds-field:focus {
   outline: none;
